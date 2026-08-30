@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
-  <!-- RC monogram: splits cleanly on the vertical center -->
-  <g stroke="#000" stroke-width="14" stroke-linecap="square" stroke-linejoin="miter">
-    <path d="M38 36 v128"/>
-    <path d="M38 36 h48 q36 0 36 34 q0 34 -36 34 H38"/>
-    <path d="M78 104 L128 164"/>
-    <path d="M170 50 Q122 36 122 100 Q122 164 170 150"/>
-  </g>
-</svg>

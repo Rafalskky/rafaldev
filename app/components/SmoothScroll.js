@@ -4,6 +4,9 @@ import Lenis from "lenis";
 
 export default function SmoothScroll({ children, infinite = true }) {
   useEffect(() => {
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    if (coarse) return undefined;
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -100 * t)),
@@ -11,7 +14,7 @@ export default function SmoothScroll({ children, infinite = true }) {
       gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 1,
-      touchMultiplier: 2,
+      touchMultiplier: 1,
       infinite: infinite,
     });
 
@@ -21,8 +24,6 @@ export default function SmoothScroll({ children, infinite = true }) {
     }
 
     requestAnimationFrame(raf);
-
-    // Global access for scroll syncing if needed
     window.lenis = lenis;
 
     return () => {

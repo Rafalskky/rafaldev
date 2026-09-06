@@ -5,7 +5,7 @@ export default function Footer() {
   const currentYear = 2026;
 
   return (
-    <footer className="relative w-full min-h-[70vh] text-black px-6 md:px-12 py-24 flex flex-col justify-between overflow-hidden">
+    <footer className="relative w-full min-h-[70dvh] text-black px-6 md:px-12 py-24 flex flex-col justify-between overflow-hidden">
       <div className="max-w-[1600px] mx-auto w-full flex flex-col justify-center">
         <motion.div
           initial={{ opacity: 0, y: 100 }}

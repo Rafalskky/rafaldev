@@ -11,10 +11,9 @@ function wrapDelta(value, index, count) {
   return d;
 }
 
-/* Step between card centers, as % of card height. */
 const STEP = 108;
 
-function CaseSlide({ src, alt, index, count, smooth, onSelect }) {
+function ProjectSlide({ project, index, count, smooth, card, onOpen }) {
   const d = useTransform(smooth, (v) => wrapDelta(v, index, count));
   const y = useTransform(d, (v) => `calc(-50% + ${v * STEP}%)`);
   const scale = useTransform(d, (v) => 1 - Math.min(Math.abs(v) * 0.08, 0.24));
@@ -28,43 +27,49 @@ function CaseSlide({ src, alt, index, count, smooth, onSelect }) {
 
   return (
     <motion.div
-      className="absolute left-1/2 top-1/2 h-[88%] md:h-[72%] aspect-[3/4] max-w-[92%] md:max-w-[85%]"
-      style={{ x: "-50%", y, scale, opacity, zIndex, filter: grayscale }}
+      className="absolute left-1/2 top-1/2"
+      style={{
+        x: "-50%",
+        y,
+        scale,
+        opacity,
+        zIndex,
+        filter: grayscale,
+        width: card.width,
+        height: card.height,
+      }}
     >
       <button
         type="button"
-        onClick={() => onSelect(index)}
-        className="relative block w-full h-full cursor-pointer overflow-hidden bg-zinc-900"
-        aria-label={`${alt} — image ${index + 1} of ${count}`}
-        tabIndex={-1}
+        onClick={() => onOpen(project)}
+        className="relative block w-full h-full cursor-pointer overflow-hidden pointer-events-auto text-left"
+        aria-label={`Open ${project.name}`}
       >
-        <Image src={src} alt={`${alt} — screenshot ${index + 1}`} fill sizes="45vw" className="object-cover" />
+        <Image
+          src={project.image}
+          alt={project.name}
+          fill
+          sizes="(max-width: 1023px) 62vw, 380px"
+          className="object-cover"
+        />
       </button>
     </motion.div>
   );
 }
 
-export default function CaseGallery({ images, alt }) {
-  const count = images.length;
+export default function ProjectStrip({ projects, card, enabled, onOpen, onActiveChange }) {
+  const count = projects.length;
   const progress = useMotionValue(0);
   const smooth = useSpring(progress, { stiffness: 160, damping: 28, mass: 0.9 });
-  const [current, setCurrent] = useState(0);
   const snapTimer = useRef(null);
 
-  const barWidth = useTransform(smooth, (v) => {
-    const p = (((v % count) + count) % count) / count;
-    return `${(p + 1 / count) * 100}%`;
-  });
-
-  useEffect(() => {
-    progress.jump(0);
-    smooth.jump(0);
-  }, [images, progress, smooth]);
+  const onActiveChangeRef = useRef(onActiveChange);
+  onActiveChangeRef.current = onActiveChange;
 
   useEffect(() => {
     const unsubscribe = smooth.on("change", (v) => {
       const idx = ((Math.round(v) % count) + count) % count;
-      setCurrent(idx);
+      onActiveChangeRef.current(idx);
     });
     return () => unsubscribe();
   }, [smooth, count]);
@@ -83,7 +88,7 @@ export default function CaseGallery({ images, alt }) {
   );
 
   useEffect(() => {
-    if (count < 2) return undefined;
+    if (!enabled || count < 2) return undefined;
 
     const scheduleSnap = () => {
       clearTimeout(snapTimer.current);
@@ -132,70 +137,21 @@ export default function CaseGallery({ images, alt }) {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("keydown", onKey);
     };
-  }, [count, progress, step]);
-
-  if (count === 1) {
-    return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        <div className="relative h-[88%] md:h-[72%] aspect-[3/4] max-w-[92%] md:max-w-[85%]">
-          <Image src={images[0]} alt={alt} fill sizes="45vw" className="object-cover" />
-        </div>
-      </div>
-    );
-  }
+  }, [enabled, count, progress, step]);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
-      {images.map((src, index) => (
-        <CaseSlide
-          key={`${src}-${index}`}
-          src={src}
-          alt={alt}
+      {projects.map((project, index) => (
+        <ProjectSlide
+          key={project.id}
+          project={project}
           index={index}
           count={count}
           smooth={smooth}
-          onSelect={goTo}
+          card={card}
+          onOpen={onOpen}
         />
       ))}
-
-      {count > 1 && (
-        <div
-          className="md:hidden absolute left-4 top-1/2 -translate-y-1/2 z-30 h-[52%] w-px bg-white/20 overflow-hidden pointer-events-none"
-          aria-hidden="true"
-        >
-          <motion.div className="absolute inset-x-0 top-0 bg-white" style={{ height: barWidth }} />
-        </div>
-      )}
-
-      <div className="hidden md:flex absolute bottom-6 md:bottom-8 left-0 right-0 z-30 items-end justify-between px-5 md:px-8 text-white pointer-events-none">
-        <div className="flex items-baseline gap-2 font-bold tracking-widest tabular-nums">
-          <span className="text-sm">{String(current + 1).padStart(2, "0")}</span>
-          <span className="text-[10px] opacity-50">/ {String(count).padStart(2, "0")}</span>
-        </div>
-
-        <div className="flex-1 mx-8 mb-1.5 h-px bg-white/20 relative overflow-hidden">
-          <motion.div className="absolute inset-y-0 left-0 bg-white" style={{ width: barWidth }} />
-        </div>
-
-        <div className="flex gap-4 pointer-events-auto">
-          <button
-            type="button"
-            onClick={() => step(-1)}
-            className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            aria-label="Previous image"
-          >
-            Prev
-          </button>
-          <button
-            type="button"
-            onClick={() => step(1)}
-            className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            aria-label="Next image"
-          >
-            Next
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

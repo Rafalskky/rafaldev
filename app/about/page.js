@@ -4,7 +4,7 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-
 import Image from "next/image";
 import SmoothScroll from "../components/SmoothScroll";
 import Footer from "../components/Footer";
-import Logo from "../components/Logo";
+import { logoSplitDistance, useLogo } from "../components/Logo";
 import { useTransition } from "../components/TransitionContext";
 import { aboutData } from "../data/about";
 
@@ -66,10 +66,18 @@ const SplitText = ({ children, className = "", delay = 0 }) => {
 
 export default function About() {
   const { isExiting, setShowChrome } = useTransition();
+  const { isLoaded, setIsLoaded, setZIndex, setSplitDistance, scrollProgress } = useLogo();
   const containerRef = useRef(null);
   const [showBio, setShowBio] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
   const { scrollY } = useScroll();
+
+  useEffect(() => {
+    setZIndex(20);
+    const onResize = () => setSplitDistance(logoSplitDistance(window.innerWidth));
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [setZIndex, setSplitDistance]);
 
   useEffect(() => {
     const open = setTimeout(() => {
@@ -77,14 +85,14 @@ export default function About() {
       setShowChrome(true);
     }, 180);
     return () => clearTimeout(open);
-  }, [setShowChrome]);
+  }, [setShowChrome, setIsLoaded]);
 
   useEffect(() => {
     if (!isExiting) return undefined;
     setShowChrome(false);
     const closeLogo = setTimeout(() => setIsLoaded(false), 400);
     return () => clearTimeout(closeLogo);
-  }, [isExiting, setShowChrome]);
+  }, [isExiting, setShowChrome, setIsLoaded]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     if (latest > 100) {
@@ -99,16 +107,23 @@ export default function About() {
     offset: ["start start", "end end"],
   });
 
+  useEffect(() => {
+    if (isExiting) return undefined;
+    scrollProgress.set(scrollYProgress.get());
+    const unsub = scrollYProgress.on("change", (v) => scrollProgress.set(v));
+    return () => unsub();
+  }, [scrollYProgress, scrollProgress, isExiting]);
+
   return (
     <SmoothScroll infinite={false}>
-      <main ref={containerRef}>
+      <main ref={containerRef} className="relative">
         <AnimatePresence>
           {showBio && !isExiting && isLoaded && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed top-[180px] left-12 z-50 w-[25%] pointer-events-none"
+              className="hidden lg:block fixed top-[180px] left-12 z-50 w-[25%] pointer-events-none"
             >
               <div className="pointer-events-auto max-w-xs text-sm leading-relaxed text-black">
                 <p className="mb-4">{aboutData.aboutMe}</p>
@@ -120,18 +135,15 @@ export default function About() {
           )}
         </AnimatePresence>
 
-        <Logo isLoaded={isLoaded} scrollYProgress={scrollYProgress} zIndex={20} splitDistance={200} />
-
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isLoaded && !isExiting ? 1 : 0 }}
           transition={{ duration: 1.2, delay: isLoaded ? 0.25 : 0, ease: [0.76, 0, 0.24, 1] }}
-          className="relative pt-[80vh]"
+          className="relative pt-[80dvh]"
         >
           <section className="px-6 md:px-12 py-32 mx-auto relative z-10">
             <div className="grid grid-cols-12 relative">
               <div className="col-span-12 md:col-span-9">
-                <p className="obys-label">Introduction</p>
                 <SplitText className="obys-text-large font-black uppercase leading-[0.9] relative z-30">
                   I&apos;m Rafal, a frontend developer in Stockholm. I ship products, not just interfaces.
                 </SplitText>
@@ -142,7 +154,6 @@ export default function About() {
           <section className="px-6 md:px-12 py-32 mx-auto border-t border-black/5 relative z-10">
             <div className="grid grid-cols-12 relative">
               <div className="col-span-12 md:col-start-4 md:col-span-9 text-right md:text-left">
-                <p className="obys-label md:text-left text-right">Work</p>
                 <SplitText className="obys-text-large relative z-30">
                   Two solo products end to end: Sagobo, a personalized children&apos;s book platform, and Job Hunter, an open-source job pipeline. Game programming at BTH feeds the motion.
                 </SplitText>
@@ -164,7 +175,6 @@ export default function About() {
           <section className="px-6 md:px-12 py-64 bg-black text-white overflow-hidden relative z-100">
             <div className="mx-auto relative">
               <div className="relative z-50">
-                <p className="obys-label text-white">Jobs</p>
                 <ul className="max-w-3xl">
                   {aboutData.jobs.map((job) => (
                     <li key={`${job.company}-${job.period}`} className="group border-b border-white/15">
@@ -185,7 +195,6 @@ export default function About() {
 
           <section className="px-6 md:px-12 py-48 mx-auto relative z-10">
             <div className="relative">
-              <p className="obys-label">Education</p>
               <SplitText className="obys-text-large font-bold mb-8 relative z-30">
                 {aboutData.education.program} at {aboutData.education.school}.
               </SplitText>

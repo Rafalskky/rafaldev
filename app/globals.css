@@ -3,6 +3,8 @@
 :root {
   --background: #f5f5f5;
   --foreground: #000000;
+  --vvh: 100svh;
+  --vv-top: 0px;
 }
 
 @theme inline {
@@ -39,15 +41,6 @@ body {
   line-height: 1.25;
   letter-spacing: -0.03em;
   font-weight: 400;
-}
-
-.obys-label {
-  font-size: 12px;
-  font-weight: 500; /* Reduced from 600 */
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 1.5rem;
-  opacity: 0.4;
 }
 
 .obys-footer-item {

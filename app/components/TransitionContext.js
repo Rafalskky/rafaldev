@@ -9,6 +9,7 @@ export const useTransition = () => useContext(TransitionContext);
 export const TransitionProvider = ({ children }) => {
   const [isExiting, setIsExiting] = useState(false);
   const [showChrome, setShowChrome] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
   const router = useRouter();
 
   const navigate = useCallback((href) => {
@@ -21,7 +22,7 @@ export const TransitionProvider = ({ children }) => {
   }, [router]);
 
   return (
-    <TransitionContext.Provider value={{ isExiting, navigate, showChrome, setShowChrome }}>
+    <TransitionContext.Provider value={{ isExiting, navigate, showChrome, setShowChrome, projectOpen, setProjectOpen }}>
       {children}
     </TransitionContext.Provider>
   );
